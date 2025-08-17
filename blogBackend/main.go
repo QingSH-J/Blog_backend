@@ -20,9 +20,10 @@ func main() {
 	// create stores and services
 	userStore := store.NewUserStore(db)
 	bookLogStore := store.NewBookLogStore(db)
+	forumStore := store.NewForumStore(db)
 	authService := service.NewAuthService(userStore)
 	logService := service.NewLogService(bookLogStore)
-
+	forumService := service.NewForumService(forumStore)
 	// database migrations
 	fmt.Println("Running database migrations...")
 	if err := userStore.Migrate(); err != nil {
@@ -37,8 +38,9 @@ func main() {
 
 	// create API dependencies
 	deps := api.HandlerDependencies{
-		AuthService: authService,
-		LogService:  logService,
+		AuthService:  authService,
+		LogService:   logService,
+		ForumService: forumService,
 	}
 
 	// create router

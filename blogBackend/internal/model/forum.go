@@ -13,7 +13,7 @@ type Topic struct {
 	UserID   uint      `json:"user_id" gorm:"not null;index"`
 	User     UserLog   `json:"user" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Comments []Comment `json:"comments" gorm:"foreignKey:TopicID"`
-	Viewcount int      `json:"view_count" gorm:"default:0"`
+	ViewCount int      `json:"view_count" gorm:"default:0"`
 }
 
 type Comment struct {

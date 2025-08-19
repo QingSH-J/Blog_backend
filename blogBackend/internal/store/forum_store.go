@@ -10,7 +10,7 @@ type ForumStore interface {
 	Migrate() error
 	CreateTopic(topic *model.Topic) error
 	GetTopic(page, pageSize int) ([]model.Topic, int64, error) //this function used to get the topics list with pagination
-	GetTopicByID(topicID uint) (*model.Topic, error)    //this function used to get the topic details by its ID
+	GetTopicByID(topicID uint) (*model.Topic, error)           //this function used to get the topic details by its ID
 	CreateComment(comment *model.Comment) error
 	GetCommentsByTopicID(topicID int, page, pageSize int) ([]model.Comment, error)
 
@@ -50,9 +50,6 @@ func (s *forumStore) GetTopic(page, pageSize int) ([]model.Topic, int64, error) 
 
 	if err := s.db.Preload("User").Offset(offset).Limit(pageSize).Find(&topics).Error; err != nil {
 		return nil, 0, err
-	}
-	for i := range topics {
-		topics[i].Viewcount = 0 // Initialize view count to 0
 	}
 	return topics, total, nil
 }

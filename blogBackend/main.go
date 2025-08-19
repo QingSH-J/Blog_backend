@@ -21,9 +21,11 @@ func main() {
 	userStore := store.NewUserStore(db)
 	bookLogStore := store.NewBookLogStore(db)
 	forumStore := store.NewForumStore(db)
+	readtimeStore := store.NewReadTimeStore(db)
 	authService := service.NewAuthService(userStore)
 	logService := service.NewLogService(bookLogStore)
 	forumService := service.NewForumService(forumStore)
+	readTimeService := service.NewReadService(readtimeStore)
 	// database migrations
 	fmt.Println("Running database migrations...")
 	if err := userStore.Migrate(); err != nil {
@@ -36,11 +38,23 @@ func main() {
 	}
 	fmt.Println("Book log table migration successful")
 
+	if err := forumStore.Migrate(); err != nil {
+		log.Fatalf("Error migrating forum table: %v", err)
+	}
+
+	if err := readtimeStore.Migrate(); err != nil {
+		log.Fatalf("Error migrating read time table: %v", err)
+	}
+	// Forum table migration successful
+	// fmt.Println("Read time table migration successful")
+
+	fmt.Println("Forum table migration successful")
 	// create API dependencies
 	deps := api.HandlerDependencies{
 		AuthService:  authService,
 		LogService:   logService,
 		ForumService: forumService,
+		ReadService:  readTimeService,
 	}
 
 	// create router

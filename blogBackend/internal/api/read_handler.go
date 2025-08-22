@@ -58,3 +58,33 @@ func (h *ReadHandler) CreateReadTime(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Read time created successfully"})
 }
+
+
+func (h *ReadHandler) GetWeeklyReadTime(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	var UserIDInt int
+	switch v := userID.(type) {
+	case int:
+		UserIDInt = v
+	case uint:
+		UserIDInt = int(v)
+	case float64:
+		UserIDInt = int(v)
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID type"})
+		return
+	}
+
+	reads, err := h.CreateReadService.GetWeeklyReadTime(UserIDInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"reads": reads})
+}

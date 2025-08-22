@@ -81,6 +81,7 @@ func NewRouter(deps HandlerDependencies) *gin.Engine {
 		ReadGroup := apiV1.Group("/readtime")
 		{
 			ReadGroup.POST("", middleware.AuthMiddleware(), readHandler.CreateReadTime)
+			ReadGroup.GET("/weekly", middleware.AuthMiddleware(), readHandler.GetWeeklyReadTime)
 		}
 	}
 

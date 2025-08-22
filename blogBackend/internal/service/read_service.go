@@ -9,6 +9,7 @@ import (
 
 type ReadService interface {
 	CreateReadTime(userID int, read *model.Read) error
+	GetWeeklyReadTime(userID int) ([]model.Read, error)
 }
 
 type readService struct {
@@ -25,4 +26,12 @@ func (s *readService) CreateReadTime(userID int, read *model.Read) error {
 	}
 	read.UserID = uint(userID) // Set the UserID for the read time
 	return s.readTimeStore.CreateReadTime(userID, read)
+}
+
+func (s *readService) GetWeeklyReadTime(userID int) ([]model.Read, error) {
+	reads, err := s.readTimeStore.GetWeeklyReadTime(userID)
+	if err != nil {
+		return nil, err
+	}
+	return reads, nil
 }

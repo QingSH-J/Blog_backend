@@ -13,6 +13,7 @@ type HandlerDependencies struct {
 	LogService   service.LogService
 	ForumService service.ForumService
 	ReadService  service.ReadService
+	ChatService  service.ChatService
 }
 
 func NewRouter(deps HandlerDependencies) *gin.Engine {
@@ -39,6 +40,7 @@ func NewRouter(deps HandlerDependencies) *gin.Engine {
 	logHandler := NewLogHandler(deps.LogService)
 	forumHandler := NewForumHandler(deps.ForumService)
 	readHandler := NewReadHandler(deps.ReadService)
+	chatHandler := NewChatHandler(deps.ChatService)
 	apiV1 := router.Group("/api/v1")
 	{
 		authGroup := apiV1.Group("/auth")
@@ -82,6 +84,14 @@ func NewRouter(deps HandlerDependencies) *gin.Engine {
 		{
 			ReadGroup.POST("", middleware.AuthMiddleware(), readHandler.CreateReadTime)
 			ReadGroup.GET("/weekly", middleware.AuthMiddleware(), readHandler.GetWeeklyReadTime)
+		}
+
+		ChatGroup := apiV1.Group("/chat")
+		{
+			ChatGroup.POST("/new", middleware.AuthMiddleware(), chatHandler.CreateChat)
+			ChatGroup.GET("/:id", middleware.AuthMiddleware(), chatHandler.GetChat)
+			ChatGroup.POST("/:id/messages", middleware.AuthMiddleware(), chatHandler.SendMessage)
+			ChatGroup.GET("/list", middleware.AuthMiddleware(), chatHandler.GetChats)
 		}
 	}
 

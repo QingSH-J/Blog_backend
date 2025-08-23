@@ -125,7 +125,7 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 }
 
 func (h *ChatHandler) SendMessage(c *gin.Context) {
-	// 从URL参数获取聊天ID
+	// from the URL, get the chat ID
 	chatIDStr := c.Param("id")
 	chatID, err := strconv.ParseUint(chatIDStr, 10, 64)
 	if err != nil {
@@ -133,10 +133,10 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 		return
 	}
 
-	// 记录请求的聊天ID
+	// record the requested chat ID
 	log.Printf("SendMessage - Request for chat ID: %d", chatID)
 
-	// 获取用户ID
+	// get user ID
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
@@ -156,24 +156,24 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 		return
 	}
 
-	// 获取消息内容
+	// get the message content from the request body
 	var input SendMessageInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 验证聊天记录所有权
+	// 
 	chat, messages, err := h.chatService.GetChatByID(int(chatID), userIDInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 创建并保存用户消息
+	// create user message
 	userMessage := model.Message{
 		ChatID:    chat.ID,
-		ChatLogID: chat.ID, // 设置ChatLogID与ChatID相同，解决外键约束问题
+		ChatLogID: chat.ID, // set the ChatLogID same as ChatID to resolve foreign key constraint issue
 		Role:      "user",
 		Content:   input.Content,
 	}
@@ -185,17 +185,17 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 
 	messages = append(messages, userMessage)
 
-	// 生成AI响应
+	// generate AI response
 	aiResponse, err := h.chatService.GenerateAIResponse(messages)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 保存AI消息
+	// save AI message
 	aiMessage := model.Message{
 		ChatID:    chat.ID,
-		ChatLogID: chat.ID, // 设置ChatLogID与ChatID相同，解决外键约束问题
+		ChatLogID: chat.ID, // set the ChatLogID same as ChatID to resolve foreign key constraint issue
 		Role:      "AI",
 		Content:   aiResponse,
 	}

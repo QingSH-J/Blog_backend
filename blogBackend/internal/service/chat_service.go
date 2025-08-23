@@ -138,7 +138,7 @@ func (s *chatService) GenerateAIResponse(messages []model.Message) (string, erro
 			Model:       "deepseek-chat",
 			Messages:    openaiMessages,
 			Temperature: 0.7,
-			MaxTokens:   150,
+			MaxTokens:   2000,
 		},
 	)
 	if err != nil {

@@ -10,33 +10,33 @@ import (
 )
 
 type Config struct {
-	// 数据库配置
+	// database configuration
 	DB_DSN string
 
-	// JWT 配置
+	// JWT configuration
 	JWT_SECRET     string
 	JWT_EXPIRES_IN string
 
-	// 服务器配置
+	// server configuration
 	SERVER_HOST string
 	SERVER_PORT string
 
-	// 环境设置
+	// environment configuration
 	ENVIRONMENT string
 
-	// 日志配置
+	// log configuration
 	LOG_LEVEL string
 
-	// CORS 配置
+	// CORS configuration
 	CORS_ALLOWED_ORIGINS string
 	CORS_ALLOWED_METHODS string
 	CORS_ALLOWED_HEADERS string
 
-	// 外部 API 配置
+	// external API configuration
 	EXTERNAL_API_BASE_URL string
 	EXTERNAL_API_KEY      string
 
-	// 密码加密配置
+	// password encryption configuration
 	BCRYPT_COST int
 
 	//DEEPSEEK API

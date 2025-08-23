@@ -38,6 +38,9 @@ type Config struct {
 
 	// 密码加密配置
 	BCRYPT_COST int
+
+	//DEEPSEEK API
+	OPENAI_API_KEY string
 }
 
 var (
@@ -73,10 +76,14 @@ func LoadConfig() {
 			EXTERNAL_API_BASE_URL: os.Getenv("EXTERNAL_API_BASE_URL"),
 			EXTERNAL_API_KEY:      os.Getenv("EXTERNAL_API_KEY"),
 			BCRYPT_COST:           bcryptCost,
+			OPENAI_API_KEY:        os.Getenv("OPENAI_API_KEY"),
 		}
 
 		if cfg.JWT_SECRET == "" {
 			log.Fatal("JWT_SECRET is not set in the environment variables")
+		}
+		if cfg.OPENAI_API_KEY == "" {
+			log.Fatal("OPENAI_API_KEY is not set in the environment variables")
 		}
 	})
 }

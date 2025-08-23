@@ -22,9 +22,12 @@ func main() {
 	bookLogStore := store.NewBookLogStore(db)
 	forumStore := store.NewForumStore(db)
 	readtimeStore := store.NewReadTimeStore(db)
+	chatStore := store.NewChatLogStore(db)
+	messageStore := store.NewMessageStore(db)
 	authService := service.NewAuthService(userStore)
 	logService := service.NewLogService(bookLogStore)
 	forumService := service.NewForumService(forumStore)
+	chatService := service.NewChatService(chatStore, messageStore, cfg.OPENAI_API_KEY)
 	readTimeService := service.NewReadService(readtimeStore)
 	// database migrations
 	fmt.Println("Running database migrations...")
@@ -48,6 +51,12 @@ func main() {
 	// Forum table migration successful
 	// fmt.Println("Read time table migration successful")
 
+	if err := chatStore.Migrate(); err != nil {
+		log.Fatalf("Error migrating chat log table: %v", err)
+	}
+	if err := messageStore.Migrate(); err != nil {
+		log.Fatalf("Error migrating message table: %v", err)
+	}
 	fmt.Println("Forum table migration successful")
 	// create API dependencies
 	deps := api.HandlerDependencies{
@@ -55,6 +64,7 @@ func main() {
 		LogService:   logService,
 		ForumService: forumService,
 		ReadService:  readTimeService,
+		ChatService:  chatService,
 	}
 
 	// create router

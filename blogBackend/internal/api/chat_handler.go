@@ -1,11 +1,13 @@
 package api
 
 import (
+	"log"
 	"net/http"
-	"project/internal/service"
-	"github.com/gin-gonic/gin"
-	"strconv"
 	"project/internal/model"
+	"project/internal/service"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ChatHandler struct {
@@ -23,7 +25,6 @@ type CreateChatInput struct {
 type SendMessageInput struct {
 	Content string `json:"message" binding:"required"`
 }
-
 
 func (h *ChatHandler) CreateChat(c *gin.Context) {
 	var input CreateChatInput
@@ -115,82 +116,94 @@ func (h *ChatHandler) GetChat(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID type"})
 		return
 	}
-	chat, messages, err := h.chatService.GetChatByID(UserIDInt, int(ChatID))
-	if err != nil{
+	chat, messages, err := h.chatService.GetChatByID(int(ChatID), UserIDInt)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"chat": chat, "messages": messages})
 }
 
-
 func (h *ChatHandler) SendMessage(c *gin.Context) {
-	chatID := c.Param("id")
-	ChatIDInt, err := strconv.ParseUint(chatID, 10, 64)
+	// 从URL参数获取聊天ID
+	chatIDStr := c.Param("id")
+	chatID, err := strconv.ParseUint(chatIDStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid chat ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid chat ID format"})
 		return
 	}
 
+	// 记录请求的聊天ID
+	log.Printf("SendMessage - Request for chat ID: %d", chatID)
+
+	// 获取用户ID
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
 		return
 	}
 
-	var UserIDInt int
-	switch v:= userID.(type) {
+	var userIDInt int
+	switch v := userID.(type) {
 	case int:
-		UserIDInt = v
+		userIDInt = v
 	case uint:
-		UserIDInt = int(v)
+		userIDInt = int(v)
 	case float64:
-		UserIDInt = int(v)
+		userIDInt = int(v)
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user ID type"})
-		return	
-	}
-
-	chat, messages, err := h.chatService.GetChatByID(UserIDInt, int(ChatIDInt))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// 获取消息内容
 	var input SendMessageInput
-	if err := c.ShouldBindJSON(&input); err != nil{
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-
-	userMessage := model.Message{
-		ChatID:  chat.ID,
-		Role:    "user",
-		Content: input.Content,
+	// 验证聊天记录所有权
+	chat, messages, err := h.chatService.GetChatByID(int(chatID), userIDInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	if err := h.chatService.SaveMessage(int(ChatIDInt), &userMessage); err != nil {
+	// 创建并保存用户消息
+	userMessage := model.Message{
+		ChatID:    chat.ID,
+		ChatLogID: chat.ID, // 设置ChatLogID与ChatID相同，解决外键约束问题
+		Role:      "user",
+		Content:   input.Content,
+	}
+
+	if err := h.chatService.SaveMessage(int(chatID), &userMessage); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	messages = append(messages, userMessage)
 
+	// 生成AI响应
 	aiResponse, err := h.chatService.GenerateAIResponse(messages)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// 保存AI消息
 	aiMessage := model.Message{
-		ChatID:  chat.ID,
-		Role:    "AI",
-		Content: aiResponse,
+		ChatID:    chat.ID,
+		ChatLogID: chat.ID, // 设置ChatLogID与ChatID相同，解决外键约束问题
+		Role:      "AI",
+		Content:   aiResponse,
 	}
-	if err := h.chatService.SaveMessage(int(ChatIDInt), &aiMessage); err != nil {
+
+	if err := h.chatService.SaveMessage(int(chatID), &aiMessage); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	
 	c.JSON(http.StatusOK, gin.H{"chat": chat, "messages": append(messages, aiMessage)})
 }
